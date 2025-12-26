@@ -62,7 +62,6 @@ public class DashManager : MonoBehaviour
 
     private void AttemptDash()
     {
-        // Check if we have at least one charge AND enough time has passed since the last dash
         if (_currentDashes >= 1.0f && Time.time >= _nextDashTime)
         {
             Vector3 dashDirection = playerMovement.GetMovementInput();
@@ -70,13 +69,12 @@ public class DashManager : MonoBehaviour
             if (dashDirection == Vector3.zero)
                 dashDirection = playerMovement.transform.forward;
 
-            playerMovement.ApplyDashImpulse(dashDirection * dashPower);
+            // MODIFIED: We now use the Shift method for linear movement
+            playerMovement.StartDashShift(dashDirection, dashPower);
 
-            // Trigger Visual and Audio Feedback
             CalculateDashTilt(dashDirection);
             PlayDashSound();
 
-            // Consume one charge and set the timestamp for the next available dash
             _currentDashes -= 1.0f;
             _nextDashTime = Time.time + dashCooldown;
         }
