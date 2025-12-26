@@ -28,9 +28,11 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 _horizontalVelocity; 
     private Vector3 _verticalVelocity;   
     private bool _isGrounded;
+    
 
     // Public property to let other scripts read the current horizontal momentum
     public Vector3 HorizontalVelocity => _horizontalVelocity;
+    public bool IsGrounded => _isGrounded;
 
     void Update()
     {

@@ -29,6 +29,7 @@ public class DashManager : MonoBehaviour
 
     private float _currentDashes;
     private float _nextDashTime; // Internal timer to track when the next dash is allowed
+    
 
     void Start()
     {
