@@ -101,4 +101,27 @@ public class PlayerMovement : MonoBehaviour
             Gizmos.DrawWireSphere(groundCheck.position, groundDistance);
         }
     }
+    
+   
+    // Returns the normalized direction based on WASD input for dash direction calculation
+    public Vector3 GetMovementInput()
+    {
+        var keyboard = Keyboard.current;
+        if (keyboard == null) return Vector3.zero;
+
+        float x = 0; float z = 0;
+        if (keyboard.wKey.isPressed) z += 1;
+        if (keyboard.sKey.isPressed) z -= 1;
+        if (keyboard.aKey.isPressed) x -= 1;
+        if (keyboard.dKey.isPressed) x += 1;
+
+        return (transform.right * x + transform.forward * z).normalized;
+    }
+
+    // Applies an external impulse (like a dash) directly to the horizontal momentum
+    public void ApplyDashImpulse(Vector3 impulse)
+    {
+        // We override current horizontal velocity with the high-speed dash impulse
+        _horizontalVelocity = impulse;
+    }
 }
