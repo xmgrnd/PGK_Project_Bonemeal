@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using System.Collections;
 
-// Handles AI behavior including pathfinding, multi-state animations, and player interaction
+// Comprehensive AI with pathfinding, combat animations, and specialized audio feedback
 public class EnemyAI : MonoBehaviour
 {
     public enum EnemyState { Idle, Chasing, Attacking, Pain, Dying }
@@ -16,6 +16,15 @@ public class EnemyAI : MonoBehaviour
     public Sprite[] painFrames;
     public Sprite[] deathFrames;
     public float animationSpeed = 0.15f;
+
+    [Header("Audio Feedback")]
+    public AudioSource audioSource;
+    public AudioClip[] painSounds;      // Randomly picks one of 2 sounds when hit
+    public AudioClip deathSound;       // Plays once on death
+    public AudioClip[] ambientSounds;   // Randomly moans while walking/idling
+    public float minAmbientDelay = 5f;
+    public float maxAmbientDelay = 12f;
+    private float _nextAmbientTime;
 
     [Header("Stats & Logic")]
     public float health = 50f;
@@ -32,15 +41,12 @@ public class EnemyAI : MonoBehaviour
     private bool _canAttack = true; 
     private int _currentFrame = 0;
     private float _animTimer;
-    
-    // Reference to stop current animation when state changes
     private Coroutine _animationCoroutine;
 
     void Start()
     {
         _agent = GetComponent<NavMeshAgent>();
         
-        // Ensure the enemy is correctly placed on the NavMesh
         if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 5.0f, NavMesh.AllAreas))
         {
             _agent.Warp(hit.position);
@@ -54,13 +60,18 @@ public class EnemyAI : MonoBehaviour
         }
         
         if (spriteRenderer == null) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        if (audioSource == null) audioSource = GetComponent<AudioSource>();
+
+        // Set initial random delay for first ambient sound
+        _nextAmbientTime = Time.time + Random.Range(minAmbientDelay, maxAmbientDelay);
     }
 
     void Update()
     {
         if (_isDead || currentState == EnemyState.Pain || _player == null || !_agent.isOnNavMesh) return;
 
-        // Calculate Euclidean distance to player: $d = \sqrt{(P_x-E_x)^2 + (P_y-E_y)^2 + (P_z-E_z)^2}$
+        HandleAmbientSounds();
+
         float distanceToPlayer = Vector3.Distance(transform.position, _player.position);
 
         switch (currentState)
@@ -71,8 +82,8 @@ public class EnemyAI : MonoBehaviour
                 break;
 
             case EnemyState.Chasing:
-                _agent.isStopped = false; // Ensure agent is allowed to move
-                _agent.SetDestination(_player.position); // Continuous path update
+                _agent.isStopped = false;
+                _agent.SetDestination(_player.position);
                 HandleAnimation(walkFrames);
                 
                 if (distanceToPlayer <= attackRange && _canAttack) 
@@ -80,14 +91,20 @@ public class EnemyAI : MonoBehaviour
                     ChangeState(EnemyState.Attacking);
                 }
                 break;
-
-            case EnemyState.Attacking:
-                // Logic handled by AttackSequence Coroutine
-                break;
         }
     }
 
-    // Helper method to clear current animation and start a new state
+    private void HandleAmbientSounds()
+    {
+        // Periodically play moans or growls if not dead or in pain
+        if (Time.time >= _nextAmbientTime && ambientSounds.Length > 0)
+        {
+            AudioClip clip = ambientSounds[Random.Range(0, ambientSounds.Length)];
+            audioSource.PlayOneShot(clip);
+            _nextAmbientTime = Time.time + Random.Range(minAmbientDelay, maxAmbientDelay);
+        }
+    }
+
     private void ChangeState(EnemyState newState)
     {
         if (_animationCoroutine != null) StopCoroutine(_animationCoroutine);
@@ -115,22 +132,20 @@ public class EnemyAI : MonoBehaviour
     private IEnumerator AttackSequence()
     {
         _canAttack = false;
-        _agent.isStopped = true; // Freeze movement to perform the attack
+        _agent.isStopped = true;
 
-        // Play the attack animation
         foreach (Sprite frame in attackFrames)
         {
             spriteRenderer.sprite = frame;
             yield return new WaitForSeconds(animationSpeed);
         }
 
-        // Apply damage if player is still in range after animation
         if (_player != null && Vector3.Distance(transform.position, _player.position) <= attackRange + 0.5f)
         {
             if (_playerHealth != null) _playerHealth.TakeDamage(damage);
         }
 
-        _agent.isStopped = false; // Resume chasing
+        _agent.isStopped = false;
         currentState = EnemyState.Chasing;
 
         yield return new WaitForSeconds(attackCooldown);
@@ -149,13 +164,17 @@ public class EnemyAI : MonoBehaviour
         }
         else 
         {
+            // Play random pain sound
+            if (painSounds.Length > 0)
+                audioSource.PlayOneShot(painSounds[Random.Range(0, painSounds.Length)]);
+
             ChangeState(EnemyState.Pain);
         }
     }
 
     private IEnumerator PainSequence()
     {
-        _agent.isStopped = true; // Stop movement during flinch
+        _agent.isStopped = true;
         
         if (painFrames.Length > 0)
             spriteRenderer.sprite = painFrames[Random.Range(0, painFrames.Length)];
@@ -171,6 +190,9 @@ public class EnemyAI : MonoBehaviour
         _isDead = true;
         _agent.enabled = false;
         currentState = EnemyState.Dying;
+
+        // Play death audio feedback
+        if (deathSound != null) audioSource.PlayOneShot(deathSound);
 
         foreach (Sprite frame in deathFrames)
         {

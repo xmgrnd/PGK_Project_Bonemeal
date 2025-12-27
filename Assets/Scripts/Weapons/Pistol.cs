@@ -3,68 +3,74 @@ using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using System.Collections;
 
-// Handles pistol logic, shooting, spritesheet animation, and procedural weapon bobbing
+// Comprehensive pistol logic with Quake-style bobbing and mouse sway
 public class Pistol : MonoBehaviour
 {
-    [Header("Visuals (Spritesheet)")]
-    public Image weaponDisplay;       
+    [Header("Visuals (Spritesheet)")] 
+    public Image weaponDisplay;
     public Sprite idleSprite;
-    public Sprite[] fireAnimation;    
-    public float frameRate = 0.1f;    
+    public Sprite[] fireAnimation;
+    public float frameRate = 0.1f;
 
-    [Header("Weapon Bobbing Settings")]
-    // How fast the weapon bobs
-    public float bobSpeed = 12f;
-    // How far the weapon moves horizontally and vertically
-    public float bobAmountX = 15f;
-    public float bobAmountY = 10f;
-    // How fast the weapon returns to center when stopping
-    public float returnSpeed = 5f;
+    [Header("Bobbing Settings (Quake Style)")]
+    public float bobSpeed = 12f;      
+    public float bobAmountX = 15f;    
+    public float bobAmountY = 10f;    
+    public float bobSmoothness = 10f; 
 
-    [Header("Stats")]
+    [Header("Sway Settings")]
+    public float swayAmount = 20f;    // How much the gun lags behind mouse movement
+    public float maxSwayAmount = 50f; // Limit to prevent the gun from leaving the screen
+    public float swaySmoothness = 5f; 
+
+    [Header("Combat Stats")] 
     public float damage = 20f;
     public float fireRate = 0.25f;
+    public float recoilForce = 2f;
     private float _nextFireTime;
     private bool _isFiring = false;
 
-    [Header("Audio")]
-    public AudioSource audioSource;
-    public AudioClip fireSound;
-
-    // References and Internal State
+    [Header("References")] 
+    private MouseLook _mouseLook;
     private PlayerMovement _movement;
     private Vector3 _originalPosition;
     private float _bobTimer;
 
+    [Header("Audio & UI")] 
+    public AudioSource audioSource;
+    public AudioClip fireSound;
+    public Image crosshairUI;
+    public Sprite pistolCrosshair;
+
+    [Header("VFX Settings")] 
+    public GameObject bloodEffectPrefab;
+
     void Start()
     {
+        _mouseLook = GetComponentInParent<MouseLook>();
+        _movement = GetComponentInParent<PlayerMovement>();
+
         if (weaponDisplay != null && idleSprite != null)
         {
             weaponDisplay.sprite = idleSprite;
-            // Store the initial UI position
             _originalPosition = weaponDisplay.rectTransform.localPosition;
         }
-
-        // Find movement script in parents to sync bobbing with speed
-        _movement = GetComponentInParent<PlayerMovement>();
     }
 
     private void OnEnable()
     {
         _isFiring = false;
-        if (weaponDisplay != null && idleSprite != null)
-        {
-            weaponDisplay.sprite = idleSprite;
-        }
+        if (weaponDisplay != null && idleSprite != null) weaponDisplay.sprite = idleSprite;
+        if (crosshairUI != null && pistolCrosshair != null) crosshairUI.sprite = pistolCrosshair;
     }
 
     void Update()
     {
-        HandleShooting();
-        HandleWeaponBob();
+        HandleFiring();
+        HandleWeaponVisuals();
     }
 
-    private void HandleShooting()
+    private void HandleFiring()
     {
         var mouse = Mouse.current;
         if (mouse != null && mouse.leftButton.isPressed && Time.time >= _nextFireTime && !_isFiring)
@@ -73,41 +79,63 @@ public class Pistol : MonoBehaviour
         }
     }
 
-    private void HandleWeaponBob()
+    private void HandleWeaponVisuals()
     {
         if (_movement == null || weaponDisplay == null) return;
 
+        // --- 1. BOBBING LOGIC (Walking) ---
         float speed = _movement.HorizontalVelocity.magnitude;
+        Vector3 targetBobPos = _originalPosition;
 
-        // Only bob when player is grounded and moving
         if (_movement.IsGrounded && speed > 0.1f)
         {
-            // Advance timer based on speed
             _bobTimer += Time.deltaTime * bobSpeed;
-
-            // Calculate "Figure Eight" bobbing
-            // Horizontal: $\cos(t)$
-            // Vertical: $\sin(2t)$ for double frequency (classic FPS feel)
-            float xOffset = Mathf.Cos(_bobTimer) * bobAmountX;
-            float yOffset = Mathf.Abs(Mathf.Sin(_bobTimer)) * bobAmountY;
-
-            Vector3 targetBobPos = _originalPosition + new Vector3(xOffset, yOffset, 0);
-            weaponDisplay.rectTransform.localPosition = Vector3.Lerp(weaponDisplay.rectTransform.localPosition, targetBobPos, Time.deltaTime * 10f);
+            // Smooth Sine instead of Absolute Sine for the "floating" Quake effect
+            float bobX = Mathf.Sin(_bobTimer * 0.5f) * bobAmountX;
+            float bobY = Mathf.Sin(_bobTimer) * bobAmountY;
+            targetBobPos += new Vector3(bobX, bobY, 0);
         }
         else
         {
-            // Reset timer and smoothly return to original position when idle or in air
             _bobTimer = 0;
-            weaponDisplay.rectTransform.localPosition = Vector3.Lerp(weaponDisplay.rectTransform.localPosition, _originalPosition, Time.deltaTime * returnSpeed);
         }
+
+        // --- 2. SWAY LOGIC (Mouse Movement) ---
+        Vector2 mouseDelta = Mouse.current.delta.ReadValue();
+        float swayX = -mouseDelta.x * swayAmount * 0.1f;
+        float swayY = -mouseDelta.y * swayAmount * 0.1f;
+        
+        // Clamp the sway so the gun doesn't fly off-screen
+        swayX = Mathf.Clamp(swayX, -maxSwayAmount, maxSwayAmount);
+        swayY = Mathf.Clamp(swayY, -maxSwayAmount, maxSwayAmount);
+        
+        Vector3 targetSwayPos = new Vector3(swayX, swayY, 0);
+
+        // --- 3. APPLY FINAL POSITION ---
+        // Combine both Bobbing and Sway for the final feel
+        Vector3 finalTarget = targetBobPos + targetSwayPos;
+        weaponDisplay.rectTransform.localPosition = Vector3.Lerp(weaponDisplay.rectTransform.localPosition, finalTarget, Time.deltaTime * bobSmoothness);
+    }
+
+    private void OnDisable()
+    {
+        _isFiring = false;
+        StopAllCoroutines();
     }
 
     private IEnumerator FireSequence()
     {
         _isFiring = true;
         _nextFireTime = Time.time + fireRate;
-
+        if (_mouseLook != null) _mouseLook.AddRecoil(recoilForce);
         if (audioSource && fireSound) audioSource.PlayOneShot(fireSound);
+
+        RaycastHit hit;
+        if (Physics.Raycast(Camera.main.transform.position, Camera.main.transform.forward, out hit, 100f))
+        {
+            EnemyAI enemy = hit.collider.GetComponentInParent<EnemyAI>();
+            if (enemy != null) { enemy.TakeDamage(damage); SpawnBlood(hit); }
+        }
 
         foreach (Sprite frame in fireAnimation)
         {
@@ -117,5 +145,14 @@ public class Pistol : MonoBehaviour
 
         weaponDisplay.sprite = idleSprite;
         _isFiring = false;
+    }
+    
+    private void SpawnBlood(RaycastHit hit)
+    {
+        if (bloodEffectPrefab != null)
+        {
+            GameObject blood = Instantiate(bloodEffectPrefab, hit.point, Quaternion.LookRotation(hit.normal));
+            Destroy(blood, 0.5f); 
+        }
     }
 }
