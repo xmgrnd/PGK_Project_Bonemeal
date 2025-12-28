@@ -1,75 +1,99 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem;
 using TMPro;
 using System.Collections;
 
-// Manages the transition between scenes with a typewriter effect and async loading
+// Manages scene loading with a virtual progress limit to prevent animation stuttering
 public class BufferManager : MonoBehaviour
 {
     [Header("UI References")]
-    public TextMeshProUGUI textDisplay;
-    public string fullText = "Wchodzenie do strefy zagrożenia...";
-    public float typingSpeed = 0.05f;
-
-    [Header("Audio")]
-    public AudioSource audioSource;
-    public AudioClip typeSound;
-
-    [Header("Scene Loading")]
+    public TextMeshProUGUI promptText;
     public string nextSceneName = "Level1";
-    public float delayAfterFinish = 1.5f;
+
+    [Header("Blinking Settings")]
+    public float blinkSpeed = 2f;
+    public float minAlpha = 0.1f;
+    public float maxAlpha = 1.0f;
+
+    [Header("Loading Limits")]
+    [Range(0.1f, 1.0f)]
+    public float loadSpeedLimit = 0.3f; // 0.3 means 30% per second
 
     private AsyncOperation _asyncLoad;
+    private float _virtualProgress = 0f;
+    private bool _isLoaded = false;
 
     void Start()
     {
-        // Start both processes at once
-        StartCoroutine(TypeText());
+        // Set loading priority to low to keep animations smooth
+        Application.backgroundLoadingPriority = ThreadPriority.Low;
+
+        if (promptText != null) promptText.gameObject.SetActive(false);
+
         StartCoroutine(LoadSceneAsync());
     }
 
-    // Handles the typewriter visual effect
-    private IEnumerator TypeText()
+    void Update()
     {
-        textDisplay.text = "";
-        
-        foreach (char letter in fullText.ToCharArray())
+        if (_isLoaded)
         {
-            textDisplay.text += letter;
-            
-            // Play sound for each letter
-            if (audioSource && typeSound)
+            HandleBlinking();
+
+            // Input System Package interaction Dostosuj skrypty...]
+            if (Keyboard.current != null && Keyboard.current.anyKey.wasPressedThisFrame)
             {
-                audioSource.PlayOneShot(typeSound);
+                ActivateScene();
             }
-
-            yield return new WaitForSeconds(typingSpeed);
-        }
-
-        // Wait a bit after the text is fully displayed
-        yield return new WaitForSeconds(delayAfterFinish);
-
-        // Once text is done and scene is loaded, activate it
-        if (_asyncLoad != null)
-        {
-            _asyncLoad.allowSceneActivation = true;
+            else if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
+            {
+                ActivateScene();
+            }
         }
     }
 
-    // Loads the scene in the background without switching immediately
     private IEnumerator LoadSceneAsync()
     {
+        if (string.IsNullOrEmpty(nextSceneName)) yield break;
+
         _asyncLoad = SceneManager.LoadSceneAsync(nextSceneName);
-        
-        // Prevent the scene from starting until the typewriter effect finishes
         _asyncLoad.allowSceneActivation = false;
 
-        while (!_asyncLoad.isDone)
+        // Loop until both the real load and virtual progress are finished
+        while (_virtualProgress < 1f)
         {
-            // Check progress: $progress \in [0, 0.9]$ while loading
-            float progress = Mathf.Clamp01(_asyncLoad.progress / 0.9f);
-            
+            // Calculate virtual progress based on the speed limit (e.g., 30% per second)
+            // $\Delta p = \Delta t \cdot speed$
+            _virtualProgress += Time.deltaTime * loadSpeedLimit;
+
+            // Optional: Clamp virtual progress so it doesn't outpace the real loading progress (0.9 threshold)
+            float realProgress = Mathf.Clamp01(_asyncLoad.progress / 0.9f);
+            float currentLimit = Mathf.Min(_virtualProgress, realProgress);
+
+            if (currentLimit >= 1f && _asyncLoad.progress >= 0.9f)
+            {
+                _isLoaded = true;
+                break;
+            }
+
             yield return null;
         }
+
+        if (promptText != null) promptText.gameObject.SetActive(true);
+    }
+
+    private void HandleBlinking()
+    {
+        if (promptText == null) return;
+        
+        float lerpAlpha = (Mathf.Sin(Time.time * blinkSpeed) + 1f) / 2f;
+        Color newColor = promptText.color;
+        newColor.a = Mathf.Lerp(minAlpha, maxAlpha, lerpAlpha);
+        promptText.color = newColor;
+    }
+
+    private void ActivateScene()
+    {
+        if (_asyncLoad != null) _asyncLoad.allowSceneActivation = true;
     }
 }
