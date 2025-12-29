@@ -44,8 +44,8 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 24300002, guid: deaacdab9a50b814297a98f5d0928f42, type: 2}
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
-  m_PlayOnAwake: 1
-  m_Volume: 1
+  m_PlayOnAwake: 0
+  m_Volume: 0.174
   m_Pitch: 1
   Loop: 0
   Mute: 0
@@ -54,7 +54,7 @@ AudioSource:
   Priority: 128
   DopplerLevel: 1
   MinDistance: 1
-  MaxDistance: 500
+  MaxDistance: 30
   Pan2D: 0
   rolloffMode: 0
   BypassEffects: 0
@@ -261,7 +261,7 @@ Transform:
   m_GameObject: {fileID: 8915556947196414784}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 6.2983, y: 1.371, z: 3.459}
+  m_LocalPosition: {x: 131.82259, y: -6.354, z: 70.827095}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -279,7 +279,7 @@ NavMeshAgent:
   m_Enabled: 1
   m_AgentTypeID: 0
   m_Radius: 0.5
-  m_Speed: 3.5
+  m_Speed: 10
   m_Acceleration: 8
   avoidancePriority: 50
   m_AngularSpeed: 120
@@ -360,7 +360,8 @@ MonoBehaviour:
   maxAmbientDelay: 12
   health: 125
   attackRange: 2.5
-  detectionRange: 20
-  damage: 15
+  detectionRange: 100
+  damage: 20
   painDuration: 0.3
   attackCooldown: 1
+  bonePrefab: {fileID: 4222350974024533544, guid: 629152a100e4ea6488d542aa0e66049b, type: 3}

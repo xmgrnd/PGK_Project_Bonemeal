@@ -50,8 +50,16 @@ public class WeaponManager : MonoBehaviour
         if (newIndex == _currentSlotIndex) return;
         EquipWeapon(newIndex);
     }
+    
+    // Forces the player to lose all weapons and stay unarmed [cite: 2025-12-25]
+    public void ClearInventoryOnDeath()
+    {
+        hasPistol = false;
+        hasShotgun = false;
+        EquipWeapon(0); // Switch to the unarmed slot visuals
+    }
 
-    private void EquipWeapon(int index)
+    public void EquipWeapon(int index)
     {
         _currentSlotIndex = index;
 

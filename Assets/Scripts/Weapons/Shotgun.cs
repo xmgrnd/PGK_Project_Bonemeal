@@ -145,7 +145,6 @@ public class Shotgun : MonoBehaviour
     {
         for (int i = 0; i < pelletCount; i++)
         {
-            // NEW SPREAD LOGIC: Uses transform right/up for accurate cone spread
             Vector3 shootDir = playerCamera.transform.forward + 
                                playerCamera.transform.right * Random.Range(-spread, spread) + 
                                playerCamera.transform.up * Random.Range(-spread, spread);
@@ -153,10 +152,18 @@ public class Shotgun : MonoBehaviour
             RaycastHit hit;
             if (Physics.Raycast(playerCamera.transform.position, shootDir, out hit, range))
             {
+                // Try to find either standard EnemyAI or the new RangedEnemyAI [cite: 2025-12-25]
                 EnemyAI enemy = hit.collider.GetComponentInParent<EnemyAI>();
+                RangedEnemyAI rangedEnemy = hit.collider.GetComponentInParent<RangedEnemyAI>();
+
                 if (enemy != null)
                 {
                     enemy.TakeDamage(damagePerPellet);
+                    SpawnBlood(hit);
+                }
+                else if (rangedEnemy != null) // This was missing! [cite: 2025-12-25]
+                {
+                    rangedEnemy.TakeDamage(damagePerPellet);
                     SpawnBlood(hit);
                 }
                 else

@@ -3,86 +3,114 @@ using UnityEngine.UI;
 using TMPro;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem;
+using System.Collections;
 
-// Manages health logic with smooth UI animations and integrated damage feedback
+// Comprehensive health system managing damage, healing, and the death sequence.
 public class PlayerHealth : MonoBehaviour
 {
     [Header("Health Settings")]
     public float maxHealth = 100f;
     private float _currentHealth;
+    private bool _isDead = false;
 
-    [Header("Smoothing Settings")]
-    public float lerpSpeed = 5f; 
-    private float _animatedFillAmount; 
+    [Header("Death Assets")]
+    public GameObject mainHUDCanvas;     
+    public GameObject crosshair;        
+    public GameObject gameOverPanel;    
+    public TextMeshProUGUI flashingText; 
+    public Transform cameraTransform;   
 
-    [Header("Damage Feedback - Visual")]
+    [Header("Visual Feedback")]
     public Volume postProcessVolume;
     public float damageVignetteIntensity = 0.5f;
     public Color damageColor = new Color(1f, 0f, 0f, 0.5f);
+    public Color healColor = new Color(0f, 1f, 0f, 0.4f); // Green tint for healing [cite: 2025-12-25]
     public float vignetteFadeSpeed = 4f;
     private Vignette _vignette;
     private float _currentVignetteIntensity;
 
-    [Header("Damage Feedback - Head Tilt")]
-    // Intensity of the random camera roll when hit
+    [Header("Camera Tilt")]
     public float damageTiltAmount = 5f;
     public float tiltFadeSpeed = 10f;
     private float _currentDamageTilt;
 
-    [Header("Audio Feedback")]
+    [Header("Audio")]
     public AudioSource audioSource;
     public AudioClip damageSound;
+    public AudioClip deathSound;
 
-    [Header("UI References")]
+    [Header("References")]
+    public WeaponManager weaponManager;
+    public PlayerMovement movementScript;
+    public DashManager dashManager;
     public Image healthFillImage;
-    public TextMeshProUGUI healthText; 
+    public TextMeshProUGUI healthText;
+
+    private float _animatedFillAmount;
 
     void Start()
     {
         _currentHealth = maxHealth;
         _animatedFillAmount = 1f; 
         
-        // Setup Post-processing reference
         if (postProcessVolume != null && postProcessVolume.profile.TryGet(out _vignette))
         {
             _vignette.active = true;
         }
 
         if (audioSource == null) audioSource = GetComponent<AudioSource>();
+        if (gameOverPanel != null) gameOverPanel.SetActive(false);
 
         UpdateHealthUI(true); 
     }
 
     void Update()
     {
-        // 1. Smooth Health Bar Animation
-        float targetFill = _currentHealth / maxHealth;
-        _animatedFillAmount = Mathf.Lerp(_animatedFillAmount, targetFill, Time.deltaTime * lerpSpeed);
-
-        if (healthFillImage != null)
+        // Death state: Wait for any key to reload [cite: 2025-12-25]
+        if (_isDead)
         {
-            healthFillImage.fillAmount = _animatedFillAmount;
+            if (Keyboard.current != null && Keyboard.current.anyKey.wasPressedThisFrame)
+            {
+                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            }
+            return;
         }
 
-        // 2. Smooth Feedback Recovery (Vignette & Tilt)
+        // Smooth UI transition
+        float targetFill = _currentHealth / maxHealth;
+        _animatedFillAmount = Mathf.Lerp(_animatedFillAmount, targetFill, Time.deltaTime * 5f);
+        if (healthFillImage != null) healthFillImage.fillAmount = _animatedFillAmount;
+    
+        // Visual recovery [cite: 2025-12-25]
         _currentVignetteIntensity = Mathf.Lerp(_currentVignetteIntensity, 0f, Time.deltaTime * vignetteFadeSpeed);
+        if (_vignette != null) _vignette.intensity.value = _currentVignetteIntensity;
+        _currentDamageTilt = Mathf.Lerp(_currentDamageTilt, 0f, Time.deltaTime * tiltFadeSpeed);
+    }
+
+    // Restored: Logic for healing from BonePickups [cite: 2025-12-25]
+    public void Heal(float amount)
+    {
+        if (_isDead) return;
+        _currentHealth = Mathf.Min(_currentHealth + amount, maxHealth);
+
+        // Flash green vignette on heal [cite: 2025-12-25]
         if (_vignette != null)
         {
-            _vignette.intensity.value = _currentVignetteIntensity;
-            _vignette.color.value = damageColor;
+            _vignette.color.value = healColor;
+            _currentVignetteIntensity = damageVignetteIntensity;
         }
 
-        _currentDamageTilt = Mathf.Lerp(_currentDamageTilt, 0f, Time.deltaTime * tiltFadeSpeed);
+        UpdateHealthUI(false);
     }
 
     public void TakeDamage(float amount)
     {
-        _currentHealth -= amount;
-        _currentHealth = Mathf.Max(_currentHealth, 0);
+        if (_isDead) return;
+        _currentHealth = Mathf.Max(_currentHealth - amount, 0);
 
-        // Trigger damage feedback effects
         ApplyDamageFeedback();
-
         UpdateHealthUI(false);
 
         if (_currentHealth <= 0) Die();
@@ -90,40 +118,80 @@ public class PlayerHealth : MonoBehaviour
 
     private void ApplyDamageFeedback()
     {
-        // Play hit sound
-        if (audioSource != null && damageSound != null)
+        if (audioSource != null && damageSound != null) audioSource.PlayOneShot(damageSound);
+        if (_vignette != null)
         {
-            audioSource.PlayOneShot(damageSound);
+            _vignette.color.value = damageColor; 
+            _currentVignetteIntensity = damageVignetteIntensity;
+        }
+        _currentDamageTilt = Random.Range(-1f, 1f) * damageTiltAmount;
+    }
+
+    public float GetDamageTilt() => _currentDamageTilt;
+
+    private void Die()
+    {
+        _isDead = true;
+
+        // Lock controls [cite: 2025-12-25]
+        if (movementScript != null) movementScript.enabled = false;
+        if (dashManager != null) dashManager.enabled = false;
+        if (cameraTransform.TryGetComponent<MouseLook>(out var look)) look.enabled = false;
+        if (cameraTransform.TryGetComponent<HeadBob>(out var bob)) bob.enabled = false;
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        if (weaponManager != null) weaponManager.ClearInventoryOnDeath();
+        if (mainHUDCanvas != null) mainHUDCanvas.SetActive(false);
+        if (crosshair != null) crosshair.SetActive(false);
+    
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(true);
+            if (flashingText != null) StartCoroutine(FlashTextRoutine());
         }
 
-        // Trigger red screen flash
-        _currentVignetteIntensity = damageVignetteIntensity;
+        if (audioSource && deathSound) audioSource.PlayOneShot(deathSound);
+        StartCoroutine(DeathCameraAnimation());
+    }
 
-        // Apply a random head tilt direction: $Tilt = \text{Random}(-1, 1) \cdot Amount$
-        _currentDamageTilt = Random.Range(-1f, 1f) * damageTiltAmount;
+    private IEnumerator DeathCameraAnimation()
+    {
+        float duration = 1.0f;
+        float elapsed = 0f;
+        Vector3 startPos = cameraTransform.localPosition;
+        Quaternion startRot = cameraTransform.localRotation;
+        
+        Vector3 targetPos = new Vector3(startPos.x, 0.2f, startPos.z);
+        Quaternion targetRot = Quaternion.Euler(10f, startRot.eulerAngles.y, 80f);
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / duration;
+            float curve = t * t * (3f - 2f * t); // SmoothStep 
+
+            cameraTransform.localPosition = Vector3.Lerp(startPos, targetPos, curve);
+            cameraTransform.localRotation = Quaternion.Slerp(startRot, targetRot, curve);
+            yield return null;
+        }
+    }
+
+    private IEnumerator FlashTextRoutine()
+    {
+        while (_isDead)
+        {
+            flashingText.alpha = 1f;
+            yield return new WaitForSeconds(0.6f);
+            flashingText.alpha = 0f;
+            yield return new WaitForSeconds(0.4f);
+        }
     }
 
     private void UpdateHealthUI(bool instant)
     {
         if (instant) _animatedFillAmount = _currentHealth / maxHealth;
-
-        if (healthText != null)
-        {
-            healthText.text = Mathf.RoundToInt(_currentHealth).ToString();
-        }
-    }
-
-    // Public getter for MouseLook to apply the hit-shake
-    public float GetDamageTilt() => _currentDamageTilt;
-
-    public void Heal(float amount)
-    {
-        _currentHealth = Mathf.Min(_currentHealth + amount, maxHealth);
-        UpdateHealthUI(false);
-    }
-
-    private void Die()
-    {
-        Debug.Log("Player has died.");
+        if (healthText != null) healthText.text = Mathf.RoundToInt(_currentHealth).ToString();
     }
 }

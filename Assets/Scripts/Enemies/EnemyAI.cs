@@ -33,6 +33,7 @@ public class EnemyAI : MonoBehaviour
     public float damage = 10f;
     public float painDuration = 0.3f;
     public float attackCooldown = 1.0f; 
+    public GameObject bonePrefab;
 
     private NavMeshAgent _agent;
     private Transform _player;
@@ -187,20 +188,50 @@ public class EnemyAI : MonoBehaviour
 
     private IEnumerator DeathSequence()
     {
+        // 1. Initial State Setup
         _isDead = true;
         _agent.enabled = false;
-        currentState = EnemyState.Dying;
+        currentState = EnemyState.Dying; //
 
-        // Play death audio feedback
-        if (deathSound != null) audioSource.PlayOneShot(deathSound);
-
-        foreach (Sprite frame in deathFrames)
+        // 2. Score Management: Adds 25 points to the global "Krew" counter
+        if (ScoreManager.Instance != null)
         {
-            spriteRenderer.sprite = frame;
-            yield return new WaitForSeconds(animationSpeed);
+            ScoreManager.Instance.AddPoints(25);
         }
 
-        if (TryGetComponent<Collider>(out Collider col)) col.enabled = false;
+        // 3. Audio Feedback: Plays the death scream once
+        if (deathSound != null) 
+        {
+            audioSource.PlayOneShot(deathSound); //
+        }
+
+        // 4. Bone Spawning: Instantiates 2 bones that pop out and wait for pickup
+        if (bonePrefab != null)
+        {
+            for (int i = 0; i < 2; i++)
+            {
+                // Spawn bones at the enemy's feet with a slight vertical offset
+                Instantiate(bonePrefab, transform.position + Vector3.up, Quaternion.identity);
+            }
+        }
+
+        // 5. Animation Loop: Cycles through the death frames sprite by sprite
+        foreach (Sprite frame in deathFrames)
+        {
+            if (frame != null)
+            {
+                spriteRenderer.sprite = frame;
+                yield return new WaitForSeconds(animationSpeed);
+            }
+        }
+
+        // 6. Cleanup: Disable collider so player doesn't bump into the invisible corpse
+        if (TryGetComponent<Collider>(out Collider col)) 
+        {
+            col.enabled = false;
+        }
+    
+        // Remove the object from the scene after 5 seconds to save resources
         Destroy(gameObject, 5f);
     }
 }
