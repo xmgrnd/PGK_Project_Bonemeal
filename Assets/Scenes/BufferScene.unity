@@ -200,7 +200,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 1089274120, guid: 589ed780d155d4b4ab0065f8eeffc924, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -248,11 +248,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BufferManager
   promptText: {fileID: 564340538}
-  nextSceneName: playground
+  nextSceneName: Level
   blinkSpeed: 2
   minAlpha: 0.1
   maxAlpha: 1
-  loadSpeedLimit: 0.3
+  loadSpeedLimit: 0.1
 --- !u!4 &225583606
 Transform:
   m_ObjectHideFlags: 0

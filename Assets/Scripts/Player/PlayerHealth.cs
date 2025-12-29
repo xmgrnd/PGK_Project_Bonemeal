@@ -49,7 +49,8 @@ public class PlayerHealth : MonoBehaviour
     public TextMeshProUGUI healthText;
 
     private float _animatedFillAmount;
-
+    public bool isGodModeActive { get; set; } = false;
+    
     void Start()
     {
         _currentHealth = maxHealth;
@@ -107,9 +108,10 @@ public class PlayerHealth : MonoBehaviour
 
     public void TakeDamage(float amount)
     {
-        if (_isDead) return;
-        _currentHealth = Mathf.Max(_currentHealth - amount, 0);
+        // Least taxing check: immediately exit if god mode or player is already dead
+        if (isGodModeActive || _isDead) return;
 
+        _currentHealth = Mathf.Max(_currentHealth - amount, 0);
         ApplyDamageFeedback();
         UpdateHealthUI(false);
 
