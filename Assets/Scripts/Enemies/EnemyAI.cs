@@ -191,9 +191,9 @@ public class EnemyAI : MonoBehaviour
         // 1. Initial State Setup
         _isDead = true;
         _agent.enabled = false;
-        currentState = EnemyState.Dying; //
+        currentState = EnemyState.Dying; 
 
-        // 2. Score Management: Adds 25 points to the global "Krew" counter
+        // 2. Score Management: Adds 25 points to the global counter
         if (ScoreManager.Instance != null)
         {
             ScoreManager.Instance.AddPoints(25);

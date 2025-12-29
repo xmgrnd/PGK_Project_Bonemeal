@@ -23,7 +23,7 @@ public class SpriteSheetAnimator : MonoBehaviour
 
     void Update()
     {
-        // New Input System: Press 'P' to pause/play the animation [cite: 2025-12-25]
+        // New Input System: Press 'P' to pause/play the animation 
         if (Keyboard.current != null && Keyboard.current.pKey.wasPressedThisFrame)
         {
             _isPlaying = !_isPlaying;

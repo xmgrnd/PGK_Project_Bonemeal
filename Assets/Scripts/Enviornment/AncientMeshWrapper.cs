@@ -30,7 +30,7 @@ public class AncientMeshWarper : MonoBehaviour
 
     void Update()
     {
-        // New Input System: Press 'G' to re-generate the weathered look [cite: 2025-12-25]
+        // New Input System: Press 'G' to re-generate the weathered look 
         if (Keyboard.current != null && Keyboard.current.gKey.wasPressedThisFrame)
         {
             ApplyAncientWarp();

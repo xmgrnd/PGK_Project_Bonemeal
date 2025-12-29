@@ -25,7 +25,7 @@ public class EnemyProjectile : MonoBehaviour
         if (playerObj != null)
         {
             _player = playerObj.transform;
-            // TARGETING FIX: Aim 0.5m above pivot (lower than before)
+            // TARGETING FIX: Aim 0.5m above pivot 
             Vector3 targetOffset = Vector3.up * 0.5f;
             _direction = (_player.position + targetOffset - transform.position).normalized;
         }
@@ -41,7 +41,7 @@ public class EnemyProjectile : MonoBehaviour
             Vector3 targetPos = _player.position + Vector3.up * 0.5f;
             Vector3 targetDir = (targetPos - transform.position).normalized;
             
-            // Apply slight homing adjustment [cite: 2025-12-25]
+            // Apply slight homing adjustment 
             _direction = Vector3.Slerp(_direction, targetDir, homingStrength * Time.deltaTime);
         }
 
@@ -72,11 +72,11 @@ public class EnemyProjectile : MonoBehaviour
             return;
         }
 
-        // Ignore Enemies [cite: 2025-12-25]
+        // Ignore Enemies 
         if (other.CompareTag("Enemy")) return;
 
-        // NO BOUNCE: Destroy on any solid surface (Environment or Default layers)
-        if (other.gameObject.layer == LayerMask.NameToLayer("Environment") || 
+        // Destroy on any solid surface (Environment or Default layers)
+        if (other.gameObject.layer == LayerMask.NameToLayer("Ground") || 
             other.gameObject.layer == LayerMask.NameToLayer("Default"))
         {
             Destroy(gameObject);

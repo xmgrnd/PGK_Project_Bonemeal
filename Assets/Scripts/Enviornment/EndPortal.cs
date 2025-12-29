@@ -13,7 +13,6 @@ public class EndPortal : MonoBehaviour
         // Detects the player using the 'Player' tag or the PlayerMovement component
         if (other.CompareTag("Player") || other.GetComponent<PlayerMovement>() != null)
         {
-            Debug.Log("<color=gold>Victory:</color> Player entered the portal. Loading next scene.");
             
             // Load the specified scene via SceneManager
             SceneManager.LoadScene(nextSceneName);

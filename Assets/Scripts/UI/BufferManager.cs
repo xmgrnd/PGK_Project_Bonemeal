@@ -113,7 +113,6 @@ public class BufferManager : MonoBehaviour
     {
         if (_asyncLoad != null)
         {
-            Debug.Log("<color=green>Buffer:</color> Activating scene now.");
             _asyncLoad.allowSceneActivation = true;
         }
     }

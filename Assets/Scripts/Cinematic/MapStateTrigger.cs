@@ -2,7 +2,6 @@ using UnityEngine;
 
 // This script coordinates game state changes, unloads terrain, manages audio, 
 // and optimizes resources by disabling a list of specified objects.
-// Updated to also enable the player's HUD (HP and Dash bars) [cite: 2025-12-25].
 public class MapStateTrigger : MonoBehaviour
 {
     [Header("1. Invisible Wall")]
@@ -34,7 +33,7 @@ public class MapStateTrigger : MonoBehaviour
     public int initialZombieCount = 10;
 
     [Header("8. UI Settings")]
-    // Reference to the Canvas containing HP and Dash bars [cite: 2025-12-25]
+    // Reference to the Canvas containing HP and Dash bars 
     public GameObject hudCanvas; 
     
     private void OnTriggerEnter(Collider other)
@@ -57,7 +56,7 @@ public class MapStateTrigger : MonoBehaviour
             playerMovement.audioSource.PlayOneShot(pickupSound);
         }
 
-        // Enable the HUD Canvas [cite: 2025-12-25]
+        // Enable the HUD Canvas 
         if (hudCanvas != null)
         {
             hudCanvas.SetActive(true);

@@ -2,7 +2,6 @@ using UnityEngine;
 
 // This script handles the bone's physics: jumping out, waiting, 
 // and then accelerating toward the player like a gravitational pull.
-// Added: Auto-destruction logic to remove uncollected bones after a set time.
 public class BonePickup : MonoBehaviour
 {
     private enum BoneState { Jumping, Waiting, Flying }
@@ -17,7 +16,7 @@ public class BonePickup : MonoBehaviour
     public float jumpForce = 5f;
 
     [Header("Despawn Settings")]
-    // Time in seconds before the bone disappears if not collected [cite: 2025-12-25]
+    // Time in seconds before the bone disappears if not collected 
     public float lifeTime = 5f; 
 
     [Header("Audio")]
@@ -44,13 +43,12 @@ public class BonePickup : MonoBehaviour
         _groundY = transform.position.y;
         _waitTimer = waitDuration;
 
-        // OPTIONAL: Simple way to destroy after X seconds if no complex logic is needed:
-        // Destroy(gameObject, lifeTime); 
+        
     }
 
     void Update()
     {
-        // 1. AUTO-DESPAWN LOGIC: Count down the lifetime and destroy if it reaches zero [cite: 2025-12-25]
+        // 1. AUTO-DESPAWN LOGIC: Count down the lifetime and destroy if it reaches zero 
         lifeTime -= Time.deltaTime;
         if (lifeTime <= 0)
         {

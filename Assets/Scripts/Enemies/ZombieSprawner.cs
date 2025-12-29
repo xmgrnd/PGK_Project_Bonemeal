@@ -23,7 +23,6 @@ public class ZombieSprawner : MonoBehaviour
     [Header("Effects & Audio")]
     public GameObject spawnVFX;
     public AudioClip spawnSFX;
-    // New AudioSource dedicated to spawning sounds to avoid cutting off music [cite: 2025-12-25]
     public AudioSource sfxSource; 
 
     [Header("Spawn Locations")]
@@ -82,7 +81,7 @@ public class ZombieSprawner : MonoBehaviour
         // Play visual effects at spawn location
         if (spawnVFX != null) Instantiate(spawnVFX, selectedPoint.position, Quaternion.identity);
 
-        // Play spawn sound globally through the dedicated SFX source [cite: 2025-12-25]
+        // Play spawn sound globally through the dedicated SFX source 
         if (sfxSource != null && spawnSFX != null)
         {
             // PlayOneShot allows multiple spawn sounds to overlap without cutting each other off

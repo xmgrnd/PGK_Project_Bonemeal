@@ -134,7 +134,7 @@ public class Pistol : MonoBehaviour
         // Standard raycast from the center of the camera forward
         if (Physics.Raycast(Camera.main.transform.position, Camera.main.transform.forward, out hit, 100f))
         {
-            // Check for both types of enemies [cite: 2025-12-25]
+            // Check for both types of enemies 
             EnemyAI enemy = hit.collider.GetComponentInParent<EnemyAI>();
             RangedEnemyAI rangedEnemy = hit.collider.GetComponentInParent<RangedEnemyAI>();
 
@@ -143,7 +143,7 @@ public class Pistol : MonoBehaviour
                 enemy.TakeDamage(damage); 
                 SpawnBlood(hit); 
             }
-            else if (rangedEnemy != null) // Logic for the new ranged enemy type [cite: 2025-12-25]
+            else if (rangedEnemy != null) // Logic for the new ranged enemy type 
             {
                 rangedEnemy.TakeDamage(damage);
                 SpawnBlood(hit);

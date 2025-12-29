@@ -26,7 +26,7 @@ public class PlayerHealth : MonoBehaviour
     public Volume postProcessVolume;
     public float damageVignetteIntensity = 0.5f;
     public Color damageColor = new Color(1f, 0f, 0f, 0.5f);
-    public Color healColor = new Color(0f, 1f, 0f, 0.4f); // Green tint for healing [cite: 2025-12-25]
+    public Color healColor = new Color(0f, 1f, 0f, 0.4f); // Green tint for healing 
     public float vignetteFadeSpeed = 4f;
     private Vignette _vignette;
     private float _currentVignetteIntensity;
@@ -69,7 +69,7 @@ public class PlayerHealth : MonoBehaviour
 
     void Update()
     {
-        // Death state: Wait for any key to reload [cite: 2025-12-25]
+        // Death state: Wait for any key to reload 
         if (_isDead)
         {
             if (Keyboard.current != null && Keyboard.current.anyKey.wasPressedThisFrame)
@@ -84,19 +84,19 @@ public class PlayerHealth : MonoBehaviour
         _animatedFillAmount = Mathf.Lerp(_animatedFillAmount, targetFill, Time.deltaTime * 5f);
         if (healthFillImage != null) healthFillImage.fillAmount = _animatedFillAmount;
     
-        // Visual recovery [cite: 2025-12-25]
+        // Visual recovery 
         _currentVignetteIntensity = Mathf.Lerp(_currentVignetteIntensity, 0f, Time.deltaTime * vignetteFadeSpeed);
         if (_vignette != null) _vignette.intensity.value = _currentVignetteIntensity;
         _currentDamageTilt = Mathf.Lerp(_currentDamageTilt, 0f, Time.deltaTime * tiltFadeSpeed);
     }
 
-    // Restored: Logic for healing from BonePickups [cite: 2025-12-25]
+    // Restored: Logic for healing from BonePickups 
     public void Heal(float amount)
     {
         if (_isDead) return;
         _currentHealth = Mathf.Min(_currentHealth + amount, maxHealth);
 
-        // Flash green vignette on heal [cite: 2025-12-25]
+        // Flash green vignette on heal 
         if (_vignette != null)
         {
             _vignette.color.value = healColor;
@@ -135,7 +135,7 @@ public class PlayerHealth : MonoBehaviour
     {
         _isDead = true;
 
-        // Lock controls [cite: 2025-12-25]
+        // Lock controls 
         if (movementScript != null) movementScript.enabled = false;
         if (dashManager != null) dashManager.enabled = false;
         if (cameraTransform.TryGetComponent<MouseLook>(out var look)) look.enabled = false;

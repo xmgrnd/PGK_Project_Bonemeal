@@ -35,7 +35,6 @@ public class RangedEnemyAI : MonoBehaviour
     private Transform _player;
     private bool _isDead = false;
     
-    // REPLACEMENT: Using a timestamp instead of a boolean flag [cite: 2025-12-25]
     private float _nextAttackTime = 0f; 
     
     private int _currentFrame = 0;
@@ -72,7 +71,7 @@ public class RangedEnemyAI : MonoBehaviour
                 if (_agent.velocity.magnitude > 0.1f) HandleAnimation(walkFrames);
                 else HandleAnimation(idleFrames);
                 
-                // CHECK: Only attack if enough time has passed since the last shot [cite: 2025-12-25]
+                // CHECK: Only attack if enough time has passed since the last shot 
                 if (distance <= attackRange && Time.time >= _nextAttackTime) 
                 {
                     ChangeState(EnemyState.Attacking);
@@ -127,7 +126,7 @@ public class RangedEnemyAI : MonoBehaviour
             Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
         }
 
-        // SET COOLDOWN: Define when the next shot can happen [cite: 2025-12-25]
+        // SET COOLDOWN: Define when the next shot can happen 
         _nextAttackTime = Time.time + attackCooldown;
 
         _agent.isStopped = false;

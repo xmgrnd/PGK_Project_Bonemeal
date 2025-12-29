@@ -16,7 +16,7 @@ public class PickupAnimation : MonoBehaviour
 
     void Start()
     {
-        // Store the original position to oscillate around it [cite: 2025-12-25]
+        // Store the original position to oscillate around it 
         _startPos = transform.position;
     }
 

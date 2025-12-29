@@ -51,7 +51,7 @@ public class WeaponManager : MonoBehaviour
         EquipWeapon(newIndex);
     }
     
-    // Forces the player to lose all weapons and stay unarmed [cite: 2025-12-25]
+    // Forces the player to lose all weapons and stay unarmed 
     public void ClearInventoryOnDeath()
     {
         hasPistol = false;

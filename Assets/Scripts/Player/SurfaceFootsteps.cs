@@ -39,14 +39,14 @@ public class SurfaceFootsteps : MonoBehaviour
         }
         else
         {
-            // Reset timer when standing still so the first step plays immediately [cite: 2025-12-25]
+            // Reset timer when standing still so the first step plays immediately 
             _stepTimer = 0;
         }
     }
 
     private void CheckMovement()
     {
-        // Using Input System: Check if WASD or Arrows are being pressed [cite: 2025-12-25]
+        // Using Input System: Check if WASD or Arrows are being pressed 
         if (Keyboard.current != null)
         {
             Vector2 moveInput = Vector2.zero;
@@ -62,7 +62,7 @@ public class SurfaceFootsteps : MonoBehaviour
     private void PlayFootstep()
     {
         RaycastHit hit;
-        // Cast a ray downwards to detect the floor tag [cite: 2025-12-25]
+        // Cast a ray downwards to detect the floor tag 
         if (Physics.Raycast(transform.position, Vector3.down, out hit, rayDistance, groundLayer))
         {
             string surfaceTag = hit.collider.tag;
@@ -79,7 +79,7 @@ public class SurfaceFootsteps : MonoBehaviour
 
             if (clipToPlay != null)
             {
-                // PlayOneShot allows overlapping sounds for more realism [cite: 2025-12-25]
+                // PlayOneShot allows overlapping sounds for more realism 
                 _audioSource.PlayOneShot(clipToPlay);
             }
         }

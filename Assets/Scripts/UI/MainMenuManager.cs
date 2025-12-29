@@ -16,7 +16,6 @@ public class MainMenuManager : MonoBehaviour
     // Loads the gameplay scene defined in demoSceneName.
     public void PlayDemo()
     {
-        Debug.Log("Loading Demo Scene...");
         SceneManager.LoadScene(demoSceneName);
     }
 
@@ -35,11 +34,6 @@ public class MainMenuManager : MonoBehaviour
         if (creditsPanel != null)
         {
             creditsPanel.SetActive(true);
-            Debug.Log("Credits panel opened.");
-        }
-        else
-        {
-            Debug.LogWarning("Credits Panel is not assigned in the Inspector!");
         }
     }
 
@@ -49,14 +43,12 @@ public class MainMenuManager : MonoBehaviour
         if (creditsPanel != null)
         {
             creditsPanel.SetActive(false);
-            Debug.Log("Credits panel closed.");
         }
     }
 
     // Shuts down the application. Note: Only works in standalone builds.
     public void ExitGame()
     {
-        Debug.Log("Exiting game...");
         Application.Quit();
     }
 }

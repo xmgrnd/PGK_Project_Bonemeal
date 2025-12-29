@@ -1,7 +1,7 @@
 using UnityEngine;
 using TMPro;
 
-// Manages the global score ("Krew") and updates the world-space billboard UI.
+// Manages the global blood score and updates the world-space billboard UI.
 // Shows a specific message once the final goal (700 points) is reached.
 public class ScoreManager : MonoBehaviour
 {

@@ -152,7 +152,7 @@ public class Shotgun : MonoBehaviour
             RaycastHit hit;
             if (Physics.Raycast(playerCamera.transform.position, shootDir, out hit, range))
             {
-                // Try to find either standard EnemyAI or the new RangedEnemyAI [cite: 2025-12-25]
+                // Try to find either standard EnemyAI or the new RangedEnemyAI 
                 EnemyAI enemy = hit.collider.GetComponentInParent<EnemyAI>();
                 RangedEnemyAI rangedEnemy = hit.collider.GetComponentInParent<RangedEnemyAI>();
 
@@ -161,7 +161,7 @@ public class Shotgun : MonoBehaviour
                     enemy.TakeDamage(damagePerPellet);
                     SpawnBlood(hit);
                 }
-                else if (rangedEnemy != null) // This was missing! [cite: 2025-12-25]
+                else if (rangedEnemy != null) 
                 {
                     rangedEnemy.TakeDamage(damagePerPellet);
                     SpawnBlood(hit);
